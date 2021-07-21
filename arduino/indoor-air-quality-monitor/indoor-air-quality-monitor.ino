@@ -34,7 +34,6 @@ void uploadData(String data) {
 }
 
 void reset() {
-    Serial.println("Trying to reset SGP30. This fails most of the times and the program stops. ");
     if (sgp.softReset()) {
         Serial.println("SGP30 soft reset succeeded.");
         if (sgp.begin()) {
@@ -108,13 +107,13 @@ void setup() {
 int counter = 0;
 
 void loop() {
+    counter++;
+
     Serial.print("Next loop. Counter: "); Serial.print(counter); Serial.print("\r\n");
   
     int error = 0;
 
     String id = getId();
-
-    counter++;
 
     // Get baseline for SGP sensor every 30 loops
     if (counter % 30 == 0) {
@@ -123,11 +122,9 @@ void loop() {
         if (! sgp.getIAQBaseline(&eCO2_base, &TVOC_base)) {
             Serial.println("Failed to get baseline readings");
             error = 1;
-            counter = 30;  // To make sure attempt is made the next loop
         } else {
             Serial.print("Baseline values: eCO2: 0x"); Serial.print(eCO2_base, HEX); Serial.print(", TVOC: 0x"); Serial.println(TVOC_base, HEX);
             error = 0;
-            counter = 0;
         }
     }
 
@@ -157,20 +154,6 @@ void loop() {
     } else {
         Serial.println("Measurement failed");
         error = 2;
-        reset();
-    }
-
-    if (sgp.IAQmeasureRaw()) {
-        float rawH2 = sgp.rawH2;
-        Serial.print("Raw H2: "); Serial.print(rawH2); Serial.print("\r\n");
-        data += id + ";" + String(timestamp) + ";" + String(error) + ";" + "raw_h2" + ";" + String(rawH2) + "\r\n";
-
-        float rawEthanol = sgp.rawEthanol;
-        Serial.print("Raw Ethanol: "); Serial.print(rawEthanol); Serial.print("\r\n");
-        data += id + ";" + String(timestamp) + ";" + String(error) + ";" + "raw_ethanol" + ";" + String(rawEthanol) + "\r\n";
-    } else {
-        Serial.println("Raw measurement failed");
-        error = 3;
         reset();
     }
 
